@@ -36,7 +36,7 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 	si := parser.SiteInfo()
 	log.Println(si.SiteName, si.Base)
 	pages := map[string]*Page{}
-	for i := 0; i < 200; i++ {
+	for {
 		page, err := parser.Next()
 		if err != nil {
 			log.Println("ERROR", page, err)
