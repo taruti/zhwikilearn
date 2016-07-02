@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/bzip2"
+	"flag"
 	"io"
 	"log"
 	"os"
@@ -36,7 +37,8 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 	si := parser.SiteInfo()
 	log.Println(si.SiteName, si.Base)
 	pages := map[string]*Page{}
-	for {
+	infinite := *maxread <= 0
+	for i := 0; infinite || i < *maxread; i++ {
 		page, err := parser.Next()
 		if err != nil {
 			log.Println("ERROR", page, err)
@@ -67,7 +69,10 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 	return nil
 }
 
+var maxread = flag.Int("maxread", -1, "Maximum number of articles to read")
+
 func main() {
+	flag.Parse()
 	err := WorkWIthDumpFile(`dump.bz2`)
 	if err != nil {
 		log.Fatal(err)
