@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/dustin/go-wikiparse"
@@ -13,7 +14,13 @@ import (
 
 type Page struct {
 	Title string
-	Runes map[rune]uint32
+	//Runes map[rune]uint16
+	Runes []RuneCount
+}
+
+type RuneCount struct {
+	Rune  rune
+	Count uint32
 }
 
 func WorkWIthDumpFile(filename string) error {
@@ -57,15 +64,31 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 			log.Println("SKIP irregular number of revisions")
 			continue
 		}
-		p := &Page{Title: page.Title, Runes: map[rune]uint32{}}
+		rmap := map[rune]uint32{}
+		p := &Page{Title: page.Title}
 		total := 0
 		for _, codepoint := range page.Revisions[0].Text {
-			p.Runes[codepoint]++
+			if codepoint < 0x80 {
+				continue
+			}
+			if codepoint > 0xFFFF {
+				log.Printf("Rare codepoint 0x%X  = %d '%c'", codepoint, codepoint, codepoint)
+			}
+			rmap[codepoint]++
 			total++
+		}
+		//		p.Runes = rmap
+		p.Runes = make([]RuneCount, 0, len(rmap))
+		for k, v := range rmap {
+			p.Runes = append(p.Runes, RuneCount{k, v})
 		}
 		log.Printf("Length=%d, Unique runes=%d L/r=%f", total, len(p.Runes), float64(total)/float64(len(p.Runes)))
 		pages[p.Title] = p
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+		log.Printf("HeapAlloc=%d HeapObjects=%d npages=%d bytes/page=%d", ms.HeapAlloc, ms.HeapObjects, len(pages), ms.HeapAlloc/uint64(len(pages)))
 	}
+	_ = pages
 	return nil
 }
 
