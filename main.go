@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"unicode"
 
 	"github.com/dustin/go-wikiparse"
 )
@@ -68,7 +69,7 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 		p := &Page{Title: page.Title}
 		total := 0
 		for _, codepoint := range page.Revisions[0].Text {
-			if codepoint < 0x80 {
+			if codepoint < 0x80 || !unicode.Is(unicode.Han, codepoint) {
 				continue
 			}
 			if codepoint > 0xFFFF {
