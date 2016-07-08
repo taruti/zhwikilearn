@@ -15,13 +15,14 @@ import (
 
 type Page struct {
 	Title string
-	//Runes map[rune]uint16
-	Runes []RuneCount
+	//	Runes map[rune]uint16
+	//	Runes []RuneCount
+	runes []runeCount
 }
 
-type RuneCount struct {
-	Rune  rune
-	Count uint32
+type runeCount struct {
+	rune  uint16
+	count uint16
 }
 
 func WorkWIthDumpFile(filename string) error {
@@ -41,11 +42,19 @@ func WorkWIthDumpFile(filename string) error {
 	return WorkWIthParser(p)
 }
 
+func satu16(u uint32) uint16 {
+	if u > 0xFFFF {
+		return 0xFFFF
+	}
+	return uint16(u)
+}
+
 func WorkWIthParser(parser wikiparse.Parser) error {
 	si := parser.SiteInfo()
 	log.Println(si.SiteName, si.Base)
 	pages := map[string]*Page{}
 	infinite := *maxread <= 0
+outer:
 	for i := 0; infinite || i < *maxread; i++ {
 		page, err := parser.Next()
 		if err != nil {
@@ -66,7 +75,7 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 			continue
 		}
 		rmap := map[rune]uint32{}
-		p := &Page{Title: page.Title}
+		p := &Page{Title: string([]byte(page.Title))}
 		total := 0
 		for _, codepoint := range page.Revisions[0].Text {
 			if codepoint < 0x80 || !unicode.Is(unicode.Han, codepoint) {
@@ -77,13 +86,18 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 			}
 			rmap[codepoint]++
 			total++
+			if len(rmap) > 1500 {
+				log.Println("SKIP too many unique codepoints")
+				continue outer
+			}
 		}
 		//		p.Runes = rmap
-		p.Runes = make([]RuneCount, 0, len(rmap))
+		p.runes = make([]runeCount, len(rmap))
+		i := 0
 		for k, v := range rmap {
-			p.Runes = append(p.Runes, RuneCount{k, v})
+			p.runes[i] = runeCount{satu16(uint32(k)), satu16(v)}
 		}
-		log.Printf("Length=%d, Unique runes=%d L/r=%f", total, len(p.Runes), float64(total)/float64(len(p.Runes)))
+		log.Printf("Length=%d, Unique runes=%d L/r=%f", total, len(p.runes), float64(total)/float64(len(p.runes)))
 		pages[p.Title] = p
 		var ms runtime.MemStats
 		runtime.ReadMemStats(&ms)
