@@ -54,6 +54,7 @@ func WorkWIthParser(parser wikiparse.Parser) error {
 	log.Println(si.SiteName, si.Base)
 	pages := map[string]*Page{}
 	infinite := *maxread <= 0
+	totalRuneLengthSum := uint64(0)
 outer:
 	for i := 0; infinite || i < *maxread; i++ {
 		page, err := parser.Next()
@@ -97,11 +98,13 @@ outer:
 		for k, v := range rmap {
 			p.runes[i] = runeCount{satu16(uint32(k)), satu16(v)}
 		}
+		totalRuneLengthSum += uint64(len(p.runes))
 		log.Printf("Length=%d, Unique runes=%d L/r=%f", total, len(p.runes), float64(total)/float64(len(p.runes)))
 		pages[p.Title] = p
 		var ms runtime.MemStats
 		runtime.ReadMemStats(&ms)
-		log.Printf("HeapAlloc=%d HeapObjects=%d npages=%d bytes/page=%d", ms.HeapAlloc, ms.HeapObjects, len(pages), ms.HeapAlloc/uint64(len(pages)))
+		lpages := uint64(len(pages))
+		log.Printf("HeapAlloc=%d HeapObjects=%d npages=%d bytes/page=%d runes/page=%d", ms.HeapAlloc, ms.HeapObjects, len(pages), ms.HeapAlloc/lpages, totalRuneLengthSum/lpages)
 	}
 	_ = pages
 	return nil
