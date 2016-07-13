@@ -67,6 +67,9 @@ func (ph *popularHan) Process(page *wikiparse.Page) error {
 			ph.m[codepoint] = old + 1
 		}
 	}
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	log.Printf("HeapAlloc=%d HeapObjects=%d", mem.HeapAlloc, mem.HeapObjects)
 	return nil
 }
 
@@ -119,7 +122,7 @@ func WorkWIthParser(parser wikiparse.Parser, work PageProcessor) error {
 			log.Println("ERROR", page, err)
 			return err
 		}
-		log.Printf("%s id=%d ns=%d nrevs=%d", page.Title, page.ID, page.Ns, len(page.Revisions))
+		log.Printf("PAGE %s id=%d ns=%d nrevs=%d", page.Title, page.ID, page.Ns, len(page.Revisions))
 		if page.Redir.Title != "" {
 			log.Println("SKIP redirection ->", page.Redir)
 			continue
@@ -144,8 +147,11 @@ var maxread = flag.Int("maxread", -1, "Maximum number of articles to read")
 
 func main() {
 	flag.Parse()
-	err := WorkWIthDumpFile(`dump.bz2`, &miscStats{map[string]*Page{}, 0})
+	//	err := WorkWIthDumpFile(`dump.bz2`, &miscStats{map[string]*Page{}, 0})
+	w := &popularHan{map[rune]uint32{}}
+	err := WorkWIthDumpFile(`dump.bz2`, w)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(len(w.m))
 }
