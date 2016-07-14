@@ -3,10 +3,12 @@ package main
 import (
 	"compress/bzip2"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -17,12 +19,16 @@ type Page struct {
 	Title string
 	//	Runes map[rune]uint16
 	//	Runes []RuneCount
-	runes []runeCount
+	runes []runeCount2
 }
 
-type runeCount struct {
+type runeCount2 struct {
 	rune  uint16
 	count uint16
+}
+type runeCount struct {
+	rune  rune
+	count uint32
 }
 
 type PageProcessor interface {
@@ -73,6 +79,24 @@ func (ph *popularHan) Process(page *wikiparse.Page) error {
 	return nil
 }
 
+type runeCountPopularity []runeCount
+
+func (arr runeCountPopularity) Len() int           { return len(arr) }
+func (arr runeCountPopularity) Less(i, j int) bool { return arr[i].count > arr[j].count }
+func (arr runeCountPopularity) Swap(i, j int)      { arr[i], arr[j] = arr[j], arr[i] }
+
+func (ph *popularHan) Print(w io.Writer) error {
+	arr := make([]runeCount, 0, len(ph.m))
+	for k, v := range ph.m {
+		arr = append(arr, runeCount{k, v})
+	}
+	sort.Sort(runeCountPopularity(arr))
+	for i, v := range arr {
+		fmt.Fprintf(w, "%5d %04X %c\n", i, v.rune, v.rune)
+	}
+	return nil
+}
+
 type miscStats struct {
 	pages              map[string]*Page
 	totalRuneLengthSum uint64
@@ -97,10 +121,10 @@ func (ms *miscStats) Process(page *wikiparse.Page) error {
 		}
 	}
 	//		p.Runes = rmap
-	p.runes = make([]runeCount, len(rmap))
+	p.runes = make([]runeCount2, len(rmap))
 	i := 0
 	for k, v := range rmap {
-		p.runes[i] = runeCount{satu16(uint32(k)), satu16(v)}
+		p.runes[i] = runeCount2{satu16(uint32(k)), satu16(v)}
 	}
 	ms.totalRuneLengthSum += uint64(len(p.runes))
 	log.Printf("Length=%d, Unique runes=%d L/r=%f", total, len(p.runes), float64(total)/float64(len(p.runes)))
@@ -122,7 +146,7 @@ func WorkWIthParser(parser wikiparse.Parser, work PageProcessor) error {
 			log.Println("ERROR", page, err)
 			return err
 		}
-		log.Printf("PAGE %s id=%d ns=%d nrevs=%d", page.Title, page.ID, page.Ns, len(page.Revisions))
+		log.Printf("PAGE %d \"%s\" id=%d ns=%d nrevs=%d", i, page.Title, page.ID, page.Ns, len(page.Revisions))
 		if page.Redir.Title != "" {
 			log.Println("SKIP redirection ->", page.Redir)
 			continue
@@ -154,4 +178,5 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println(len(w.m))
+	w.Print(os.Stdout)
 }
