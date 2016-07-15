@@ -73,9 +73,6 @@ func (ph *popularHan) Process(page *wikiparse.Page) error {
 			ph.m[codepoint] = old + 1
 		}
 	}
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
-	log.Printf("HeapAlloc=%d HeapObjects=%d", mem.HeapAlloc, mem.HeapObjects)
 	return nil
 }
 
@@ -92,7 +89,7 @@ func (ph *popularHan) Print(w io.Writer) error {
 	}
 	sort.Sort(runeCountPopularity(arr))
 	for i, v := range arr {
-		fmt.Fprintf(w, "%5d %04X %c\n", i, v.rune, v.rune)
+		fmt.Fprintf(w, "%5d %04X %c %d\n", i, v.rune, v.rune, v.count)
 	}
 	return nil
 }
