@@ -143,7 +143,6 @@ func WorkWIthParser(parser wikiparse.Parser, work PageProcessor) error {
 			if err == io.EOF {
 				return nil
 			}
-			log.Println("ERROR", page, err)
 			return err
 		}
 		log.Printf("PAGE %d \"%s\" id=%d ns=%d nrevs=%d", i, page.Title, page.ID, page.Ns, len(page.Revisions))
@@ -175,7 +174,7 @@ func main() {
 	w := &popularHan{map[rune]uint32{}}
 	err := WorkWIthDumpFile(`dump.bz2`, w)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("ERROR: %T %v", err, err)
 	}
 	log.Println(len(w.m))
 	w.Print(os.Stdout)
