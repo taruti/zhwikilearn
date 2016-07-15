@@ -140,6 +140,9 @@ func WorkWIthParser(parser wikiparse.Parser, work PageProcessor) error {
 	for i := 0; infinite || i < *maxread; i++ {
 		page, err := parser.Next()
 		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
 			log.Println("ERROR", page, err)
 			return err
 		}
