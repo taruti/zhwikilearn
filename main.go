@@ -134,11 +134,12 @@ var maxread = flag.Int("maxread", -1, "Maximum number of articles to read")
 func main() {
 	flag.Parse()
 	//	err := WorkWIthDumpFile(`dump.bz2`, &miscStats{map[string]*Page{}, 0})
-	w := &popularHan{map[rune]uint32{}}
+	//	w := &popularHan{map[rune]uint32{}}
+	w := NewScoreByHanzis(ScoreByHanziConfig{Known: 900, Learning: 100, MaxUnknown: 25})
 	err := WorkWIthDumpFile(`dump.bz2`, w)
 	if err != nil {
 		log.Printf("ERROR: %T %v", err, err)
 	}
-	log.Println(len(w.m))
-	w.Print(os.Stdout)
+	//	log.Println(len(w.m))
+	//	w.Print(os.Stdout)
 }
