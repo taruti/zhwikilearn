@@ -18,7 +18,8 @@ type ScoreByHanziConfig struct {
 
 func NewScoreByHanzis(sc ScoreByHanziConfig) *scorePageByHanzis {
 	m := map[rune]float64{}
-	for i, codepoint := range topHanzi {
+	i := 0
+	for _, codepoint := range topHanzi {
 		if i >= sc.Known+sc.Learning {
 			break
 		}
@@ -27,6 +28,7 @@ func NewScoreByHanzis(sc ScoreByHanziConfig) *scorePageByHanzis {
 			score = float64(i-sc.Known) / float64(1+sc.Learning)
 		}
 		m[codepoint] = score
+		i++
 	}
 	return &scorePageByHanzis{m, sc.MaxUnknown}
 }
