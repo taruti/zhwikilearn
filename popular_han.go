@@ -43,3 +43,27 @@ func (ph *popularHan) Print(w io.Writer) error {
 	}
 	return nil
 }
+
+// Only one occurence per page counted
+type popularHanByPage popularHan
+
+func (ph *popularHanByPage) Process(page *wikiparse.Page) error {
+	tmp := map[rune]struct{}{}
+	for _, codepoint := range page.Revisions[0].Text {
+		if codepoint < 0x80 || !unicode.Is(unicode.Han, codepoint) {
+			continue
+		}
+		tmp[codepoint] = struct{}{}
+	}
+	for codepoint, _ := range tmp {
+		old := ph.m[codepoint]
+		if old != 0xFFFFFFFF {
+			ph.m[codepoint] = old + 1
+		}
+	}
+	return nil
+}
+
+func (ph *popularHanByPage) Print(w io.Writer) error {
+	return (*popularHan)(ph).Print(w)
+}
