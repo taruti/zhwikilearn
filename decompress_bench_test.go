@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/klauspost/pgzip"
 )
 
 func mustGzip(rd io.Reader) io.Reader {
@@ -16,9 +18,19 @@ func mustGzip(rd io.Reader) io.Reader {
 	}
 	return r
 }
+func mustPGzip(rd io.Reader) io.Reader {
+	r, err := pgzip.NewReader(rd)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
 
 func BenchmarkGunzip(b *testing.B) {
 	decompress(b, "gzip", mustGzip)
+}
+func BenchmarkPGunzip(b *testing.B) {
+	decompress(b, "gzip", mustPGzip)
 }
 func BenchmarkBunzip(b *testing.B) {
 	decompress(b, "bzip2", bzip2.NewReader)
