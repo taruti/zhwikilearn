@@ -50,14 +50,16 @@ func (sh *scorePageByHanzis) Process(page *wikiparse.Page) error {
 		tcost, found := sh.runeCost[codepoint]
 		if !found {
 			unknown++
+			if unknown > sh.maxUnknown {
+				return nil
+			}
 			tcost = 1.0
 		}
 		cost += tcost
 	}
 	score := float64(total) / cost
-	if unknown < sh.maxUnknown {
-		log.Printf("SPBH \"%s\" \ttotal=%d unknown=%d cost=%.2f score=%.2f",
-			page.Title, total, unknown, cost, score)
-	}
+	log.Printf("%.2f SPBH \"%s\" \ttotal=%d unknown=%d cost=%.2f score=%.2f",
+		100*score,
+		page.Title, total, unknown, cost, score)
 	return nil
 }
