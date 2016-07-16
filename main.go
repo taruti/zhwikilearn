@@ -137,7 +137,7 @@ func main() {
 	//	w := &popularHan{map[rune]uint32{}}
 	w := &popularHanByPage{map[rune]uint32{}}
 	//	w := NewScoreByHanzis(ScoreByHanziConfig{Known: 900, Learning: 100, MaxUnknown: 25})
-	err := WorkWIthDumpFile(`dump.bz2`, w)
+	err := WorkWIthDumpFile(`dump`, w)
 	if err != nil {
 		log.Printf("ERROR: %T %v", err, err)
 	}
